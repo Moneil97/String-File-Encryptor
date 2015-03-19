@@ -6,16 +6,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -29,8 +23,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 
 @SuppressWarnings("serial")
@@ -38,7 +30,6 @@ public class Encyptor extends JFrame{
 	
 	private StringPane stringPane = new StringPane();
 	private FilePane filePane = new FilePane();
-	private String tab = "String";
 	private final JPanel panel = new JPanel();
 	private final JLabel lblPassword = new JLabel("Password:");
 	private final JTextField txtPassword = new JTextField();
@@ -68,9 +59,9 @@ public class Encyptor extends JFrame{
 						say(txtPassword.getText() + " = " + textField_1.getText());
 						
 						if (last.equals("input"))
-							stringPane.output.setText(encrypt(stringPane.input.getText(), hash));
+							stringPane.output.setText(stringEncrypt(stringPane.input.getText(), hash));
 						else if (last.equals("output"))
-							stringPane.input.setText(decrypt(stringPane.output.getText(), hash));
+							stringPane.input.setText(stringDecrypt(stringPane.output.getText(), hash));
 					}
 				});
 				
@@ -80,12 +71,6 @@ public class Encyptor extends JFrame{
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.add("String", stringPane);
 		tabbedPane.add("File", filePane);
-		tabbedPane.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				tab = ((JTabbedPane) e.getSource()).getTitleAt(((JTabbedPane) e.getSource()).getSelectedIndex());
-			}
-		});
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		
 		getContentPane().add(panel, BorderLayout.SOUTH);
@@ -132,7 +117,7 @@ public class Encyptor extends JFrame{
 					EventQueue.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							output.setText(encrypt(input.getText(), hash));
+							output.setText(stringEncrypt(input.getText(), hash));
 							last = "input";
 						}
 					});
@@ -148,7 +133,7 @@ public class Encyptor extends JFrame{
 						
 						@Override
 						public void run() {
-							input.setText(decrypt(output.getText(), hash));
+							input.setText(stringDecrypt(output.getText(), hash));
 							last = "output";
 						}
 					});
@@ -206,8 +191,7 @@ public class Encyptor extends JFrame{
 			panel_1.add(lblFile, BorderLayout.WEST);
 			
 			source = new JTextField();
-//			source.setText("C:\\");
-			source.setText("C:\\Users\\Cameron\\Desktop\\Test.txt");
+			source.setText("C:\\");
 			panel_1.add(source, BorderLayout.CENTER);
 			source.setColumns(10);
 			
@@ -250,8 +234,7 @@ public class Encyptor extends JFrame{
 			panel_4.add(btnBrowse_1, BorderLayout.EAST);
 			
 			destination = new JTextField();
-//			destination.setText("C:\\");
-			destination.setText("C:\\Users\\Cameron\\Desktop\\Out.txt");
+			destination.setText("C:\\");
 			panel_4.add(destination, BorderLayout.CENTER);
 			destination.setColumns(10);
 			
@@ -262,7 +245,7 @@ public class Encyptor extends JFrame{
 			panel_2.add(lblPassword);
 			
 			textField_1 = new JTextField();
-			textField_1.setText("password");
+			textField_1.setText(defaultPassword);
 			panel_2.add(textField_1);
 			textField_1.setColumns(10);
 			
@@ -295,14 +278,10 @@ public class Encyptor extends JFrame{
 
 	}
 	
-	private String encrypt(String in, long hash){
-		return encrypt(in.toCharArray(), hash);
-	}
-	
-	private String encrypt(char[] chars, long hash){
+	private String stringEncrypt(String in, long hash){
 		String out = "";
 		
-		for (char c : chars){
+		for (char c : in.toCharArray()){
 			int temp = (int) (c + (hash % 255));
 			out += (char) (temp > 255 ? 255 - temp : temp);
 			say(c + " --> " + (temp > 255 ? 255 - temp : temp));
@@ -311,7 +290,7 @@ public class Encyptor extends JFrame{
 		return out;
 	}
 	
-	private String decrypt(String in, long hash){
+	private String stringDecrypt(String in, long hash){
 		String out = "";
 		
 		for (char c : in.toCharArray()){
@@ -322,14 +301,28 @@ public class Encyptor extends JFrame{
 		return out;
 	}
 	
+	private byte byteDecrypt(byte b, int offset){
+		int temp = b - offset;
+		if (temp < Byte.MIN_VALUE) temp += Byte.MAX_VALUE - Byte.MIN_VALUE;
+		return (byte) temp;
+	}
+	
+	
+	private byte byteEncrypt(byte b, int offset){
+		int temp = b + offset;
+		if (temp > Byte.MAX_VALUE) temp -= Byte.MAX_VALUE - Byte.MIN_VALUE;
+		return (byte) temp;
+	}
+	
+	
+	
 	private void decryptFile(File source, File dest, long hash){
-		
-		say("Hash: " + hash);
 		
 		try {
 			
 			long fileSize = source.length();
 			long total = 0;
+			int offset = (int) hash % 255;
 			
 			FileInputStream input = new FileInputStream(source);
 			FileOutputStream output = new FileOutputStream(dest);
@@ -337,22 +330,16 @@ public class Encyptor extends JFrame{
 			do{
 				
 				byte[] buffer = new byte[100];
-				total += input.read(buffer);
+				int count = input.read(buffer);
+				total += count;
 				
-				say(Arrays.toString(buffer));
-				
-				say("Cypher- " + (hash % 255));
-				int offset = (int) hash % 255;
-				
-				for (byte b : buffer){
-					
-					int temp = b - offset;
-					if (temp < Byte.MIN_VALUE) temp += Byte.MAX_VALUE - Byte.MIN_VALUE;
-					say(b + " --> " + temp);
-					output.write((byte) temp);
+				for (int i=0; i < count; i++){
+					output.write(byteDecrypt(buffer[i], offset));
 				}
 				
-				//say(total/fileSize);
+				try{
+					say(total/(double)fileSize * 100 + "%");
+				}catch(Exception e){e.printStackTrace();}
 				
 			}while (input.available() > 0);
 				
@@ -368,68 +355,37 @@ public class Encyptor extends JFrame{
 	
 	private void encryptFile(File source, File dest, long hash){
 		
-		say("Hash: " + hash);
-		
 		try {
 			
-//			long fileSize = source.length();
-//			long total = 0;
+			long fileSize = source.length();
+			long total = 0;
+			int offset = (int) hash % 255;
 			
 			FileInputStream input = new FileInputStream(source);
 			FileOutputStream output = new FileOutputStream(dest);
-			
+		
 			do{
 				
 				byte[] buffer = new byte[100];
-				/*total += */input.read(buffer);
+				int count = input.read(buffer);
+				total += count;
 				
-				say(Arrays.toString(buffer));
-				
-				say("Cypher- " + (hash % 255));
-				
-				int offset = (int) hash % 255;
-				
-				for (byte b : buffer){
-					int temp = b + offset;
-					if (temp > Byte.MAX_VALUE) temp -= Byte.MAX_VALUE - Byte.MIN_VALUE;
-					say(b + " --> " + temp);
-					output.write((byte) temp);
+				for (int i=0; i < count; i++){
+					output.write(byteEncrypt(buffer[i], offset));
 				}
 				
-				//say(total/fileSize);
+				try{
+					say(total/(double)fileSize * 100 + "%");
+				}catch(Exception e){e.printStackTrace();}
 				
 			}while (input.available() > 0);
 			
-			
-			
-			
-			
-//			FileReader input = new FileReader(source);
-//			FileWriter output = new FileWriter(dest);
-//			
-//			int total = 0;
-//			
-//			while (input.ready()){
-//				char[] buffer = new char[100];
-//				input.read(buffer);
-//				say(Arrays.toString(buffer));
-//				String out = encrypt(buffer, hash);
-//				say(out);
-//				output.write(out);
-//				say((total += 1024)/fileSize + "%");
-//			}
-//			
 			output.close();
 			input.close();
-			
-			
-			
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		
 	}
 
 }

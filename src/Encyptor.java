@@ -2,9 +2,14 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -13,6 +18,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -156,8 +162,6 @@ public class Encyptor extends JFrame{
 			
 			split.add(inputContainer);
 			
-			
-			
 			JScrollPane outputScroll = new JScrollPane(output);
 			outputScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 			
@@ -170,18 +174,100 @@ public class Encyptor extends JFrame{
 			
 			this.setLayout(new GridLayout());
 			this.add(split);
-		}
-		
-		
+		}		
 		
 	}
 	
-	class FilePane extends JPanel{
-		
-		public FilePane() {
+	public class FilePane extends JPanel{
+		private JTextField txtC;
+		private JTextField textField_1;
+		private JTextField txtC_1;
 
+		public FilePane() {
+			
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			
+			JPanel panel_1 = new JPanel();
+			panel_1.setBorder(new EmptyBorder(10, 5, 0, 5));
+			this.add(panel_1);
+			panel_1.setLayout(new BorderLayout(0, 0));
+			
+			JLabel lblFile = new JLabel("Source:");
+			panel_1.add(lblFile, BorderLayout.WEST);
+			
+			txtC = new JTextField();
+			txtC.setText("C:\\");
+			panel_1.add(txtC, BorderLayout.CENTER);
+			txtC.setColumns(10);
+			
+			JButton btnBrowse = new JButton("Browse");
+			btnBrowse.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					JFileChooser chooser = new JFileChooser();
+					int choice = chooser.showOpenDialog(Encyptor.this);
+					
+					if (choice == JFileChooser.APPROVE_OPTION){
+						txtC.setText(chooser.getSelectedFile().getPath());
+					}
+				}
+			});
+			panel_1.add(btnBrowse, BorderLayout.EAST);
+			
+			JPanel panel_4 = new JPanel();
+			panel_4.setBorder(new EmptyBorder(10, 5, 10, 5));
+			this.add(panel_4);
+			panel_4.setLayout(new BorderLayout(0, 0));
+			
+			JLabel lblDestination = new JLabel("Destination:");
+			panel_4.add(lblDestination, BorderLayout.WEST);
+			
+			JButton btnBrowse_1 = new JButton("Browse");
+			btnBrowse_1.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					JFileChooser chooser = new JFileChooser();
+					int choice = chooser.showOpenDialog(Encyptor.this);
+					
+					if (choice == JFileChooser.APPROVE_OPTION){
+						txtC_1.setText(chooser.getSelectedFile().getPath());
+					}
+				}
+			});
+			panel_4.add(btnBrowse_1, BorderLayout.EAST);
+			
+			txtC_1 = new JTextField();
+			txtC_1.setText("C:\\");
+			panel_4.add(txtC_1, BorderLayout.CENTER);
+			txtC_1.setColumns(10);
+			
+			JPanel panel_2 = new JPanel();
+			this.add(panel_2);
+			
+			JLabel lblPassword = new JLabel("Password:");
+			panel_2.add(lblPassword);
+			
+			textField_1 = new JTextField();
+			panel_2.add(textField_1);
+			textField_1.setColumns(10);
+			
+			JPanel panel_3 = new JPanel();
+			this.add(panel_3);
+			
+			JButton btnEncrypt = new JButton("Encrypt");
+			panel_3.add(btnEncrypt);
+			
+			JButton btnDecrypt = new JButton("Decrypt");
+			panel_3.add(btnDecrypt);
+			
+			JPanel panel_5 = new JPanel();
+			this.add(panel_5);
+			panel_5.setLayout(new BorderLayout(0, 0));
+			panel_5.setPreferredSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 		}
-		
+
 	}
 	
 	private String encrypt(String in){

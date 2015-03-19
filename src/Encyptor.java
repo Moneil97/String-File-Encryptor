@@ -35,7 +35,7 @@ public class Encyptor extends JFrame{
 	private final JTextField txtPassword = new JTextField();
 	private final JLabel lblHash = new JLabel("Hash:");
 	private final JTextField textField_1 = new JTextField();
-	private String defaultPassword = "default";
+	private final String defaultPassword = "default";
 	private long hash = Math.abs(defaultPassword.hashCode());
 	private String last = "";
 
